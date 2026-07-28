@@ -1,0 +1,5 @@
+build/
+vendor/
+releases/
+.DS_Store
+*.iconset/
