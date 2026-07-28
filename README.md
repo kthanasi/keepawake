@@ -2,152 +2,106 @@
 
 # KeepAwake
 
-**A tiny macOS menu-bar app that stops your screen from sleeping.**
+**Stop your Mac's screen from going to sleep — from the menu bar.**
 
-[![Download](https://img.shields.io/github/v/release/kthanasi/keepawake?label=download&style=flat-square)](https://github.com/kthanasi/keepawake/releases/latest)
+[![Download](https://img.shields.io/github/v/release/kthanasi/keepawake?label=Download&style=for-the-badge)](https://github.com/kthanasi/keepawake/releases/latest)
+
 [![Platform](https://img.shields.io/badge/macOS-13%2B-black?style=flat-square)](https://github.com/kthanasi/keepawake/releases/latest)
-[![Universal](https://img.shields.io/badge/binary-universal-blue?style=flat-square)](https://github.com/kthanasi/keepawake/releases/latest)
+[![Universal](https://img.shields.io/badge/Apple_Silicon_%26_Intel-blue?style=flat-square)](https://github.com/kthanasi/keepawake/releases/latest)
+[![Size](https://img.shields.io/badge/download-3.5_MB-lightgrey?style=flat-square)](https://github.com/kthanasi/keepawake/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
 </div>
 
 ---
 
-KeepAwake holds a single IOKit power assertion — the same kernel mechanism
-`caffeinate` uses — so the work of staying awake is done by macOS, not by the app.
-There is no polling loop, no background timer, and no busywork to burn battery.
+Presenting, reading, watching, waiting on a long build — sometimes you just need
+the screen to stay on. KeepAwake puts a coffee cup in your menu bar that does
+exactly that, and nothing else.
 
-- **Free of overhead** — 0.0% CPU and ~40 MB RSS while active
-- **Universal binary** — Apple Silicon and Intel, macOS 13+
-- **Under 400 KB**, no dependencies, no network access
-- **Timed sessions** that expire on their own so you can't forget to turn it off
+It asks macOS to hold the screen awake using the same built-in mechanism the
+system's own `caffeinate` command uses. That means **the Mac does the work, not
+the app** — KeepAwake sits at 0% CPU the entire time it's running.
+
+- ☕️ **One click** to stay awake, one click to stop
+- ⏱ **Timed sessions** that switch themselves off, so you can't forget
+- 🔋 **No battery cost** of its own — no loops, no timers, nothing spinning
+- 🪶 **Tiny** — under 4 MB, no dependencies, no account, no network beyond update checks
+- 🔄 **Keeps itself up to date**
 
 ## Install
 
-1. Download **KeepAwake-1.0.dmg** from the
-   [latest release](https://github.com/kthanasi/keepawake/releases/latest).
-2. Open the DMG and drag **KeepAwake** into **Applications**.
-3. **First launch only:** right-click (or Control-click) KeepAwake in
-   `/Applications` and choose **Open**, then click **Open** in the dialog.
+1. **[Download the latest version →](https://github.com/kthanasi/keepawake/releases/latest)**
+   (grab the `.dmg`)
+2. Open it and drag **KeepAwake** into your **Applications** folder.
+3. **The first time you open it:** right-click (or Control-click) KeepAwake in
+   Applications and choose **Open**, then click **Open** again in the dialog.
 
-Step 3 is required because the app is ad-hoc signed rather than notarized (see
-[Signing](#signing-and-notarization)). A plain double-click on the very first run
-will be blocked by Gatekeeper. Every launch after that is normal.
+> **Why the extra step?** macOS shows a warning for apps that haven't been
+> through Apple's paid notarization program. Right-click → Open is macOS's normal
+> way of saying "I trust this one." You only do it once — after that KeepAwake
+> opens like any other app.
 
-If macOS still refuses, clear the download quarantine flag:
+Nothing appears in the Dock. Look for the ☕️ cup at the top-right of your screen.
 
-```bash
-xattr -dr com.apple.quarantine /Applications/KeepAwake.app
-```
+## Using it
 
-## Usage
-
-Click the cup icon in the menu bar. A filled cup means it's awake; an outline
-means normal sleep is allowed.
+Click the cup icon in the menu bar. **A filled cup means your screen is being
+kept on. An outline cup means normal sleep behaviour.**
 
 | Menu item | What it does |
 | --- | --- |
-| **Indefinitely** | Stay awake until you turn it off |
-| **For 15m / 30m / 1h / 2h / 5h** | Timed session that expires on its own |
-| **Turn Off** | End the session now |
-| **Keep Display On** | Uncheck to let the *screen* sleep while keeping the *Mac* awake |
-| **Start on Login** | Register KeepAwake as a login item |
-| **Activate on Launch** | Turn on automatically whenever the app starts |
-| **Check for Updates…** | Ask the update feed right now |
-| **Update Automatically** | Download and install new versions in the background |
+| **Indefinitely** | Stay awake until you switch it off |
+| **For 15 min / 30 min / 1h / 2h / 5h** | Stay awake, then stop automatically |
+| **Turn Off** | Go back to normal right away |
+| **Keep Display On** | Turn this *off* to let the screen sleep while the Mac keeps working — handy for long downloads or exports |
+| **Start on Login** | Open KeepAwake automatically when you log in |
+| **Activate on Launch** | Start out awake whenever the app opens |
+| **Check for Updates…** | Look for a new version now |
+| **Update Automatically** | Install new versions in the background |
 
-The menu header always shows the current state and the time remaining.
-
-Confirm it's working at any point:
-
-```bash
-pmset -g assertions | grep -i keepawake
-```
-
-`PreventUserIdleDisplaySleep` means the screen is being held on.
-`PreventUserIdleSystemSleep` means only the machine is.
+The top of the menu always tells you the current state and how much time is left.
 
 ## Updates
 
-KeepAwake updates itself with [Sparkle](https://sparkle-project.org). It checks
-[`appcast.xml`](appcast.xml) on this repo once a day, and offers anything newer
-than the running version — you can also check on demand from the menu, or turn on
-**Update Automatically** to have it install silently.
+KeepAwake checks for new versions once a day and will offer them to you. You can
+also check whenever you like from the menu, or let it update silently.
 
-Every update archive is signed with an EdDSA key whose public half is baked into
-the app. Sparkle refuses any download whose signature doesn't match, so a
-tampered or substituted archive can't be installed even though the app itself is
-not notarized.
+Updates are cryptographically signed, and the app refuses to install anything
+that isn't signed with the project's key — so an update can't be tampered with in
+transit.
 
-### Cutting a release
+## Uninstalling
 
-```bash
-./release.sh 1.1 "What changed in this version."
-```
-
-That bumps `VERSION`, builds, signs the archive with the private key from your
-login Keychain, regenerates `appcast.xml`, pushes, and creates the GitHub release
-with both the DMG and the ZIP attached. Publishing the appcast is what actually
-ships the update — existing installs pick it up within a day.
-
-The private signing key lives only in your Keychain. **If you lose it you cannot
-ship updates to existing installs**, since they will reject archives signed by any
-other key; everyone would have to reinstall by hand.
-
-## How it works
-
-The whole app is one power assertion:
-
-```swift
-IOPMAssertionCreateWithName(
-    kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
-    IOPMAssertionLevel(kIOPMAssertionLevelOn),
-    "KeepAwake: user requested" as CFString,
-    &assertionID
-)
-```
-
-The kernel owns that flag until it's released, so nothing has to run to maintain
-it. The menu is rebuilt only at the moment you open it, and a `Timer` exists only
-during a timed session — with a 30-second tolerance so macOS can coalesce the
-wake-up with other scheduled work. An idle KeepAwake schedules nothing at all.
-
-## Building
+Quit KeepAwake from its menu, then drag `KeepAwake.app` from Applications to the
+Trash. If you'd like to remove its settings too:
 
 ```bash
-./build.sh
+defaults delete com.kthanasi.KeepAwake
+rm -rf ~/Library/Caches/com.kthanasi.KeepAwake
 ```
 
-Produces `build/KeepAwake.app` and `build/KeepAwake-1.0.dmg`.
+## Questions
 
-| File | Role |
-| --- | --- |
-| `Sources/main.swift` | The entire app |
-| `makeicon.swift` | Renders the icon from an SF Symbol into `.icns` |
-| `build.sh` | Compiles both architectures, lipos them, signs, and builds the DMG |
+**Does it stop the screen from locking?**
+It prevents the screen from *sleeping*, which also prevents the lock that follows.
+It does not change your password or Screen Time settings.
 
-## Signing and notarization
+**Will it keep my Mac awake with the lid closed?**
+No. Closing the lid always sleeps the machine.
 
-Releases are **ad-hoc signed** (`codesign --sign -`). The app runs on any Mac, but
-Gatekeeper warns on first open because it is not notarized by Apple.
+**Does it drain my battery?**
+The app itself costs nothing measurable. Your screen staying on does use power —
+that's the point of it — so a timed session is the battery-friendly choice.
 
-Notarizing requires a **Developer ID Application** certificate, which needs a paid
-Apple Developer Program membership. If you have one, the build script already
-takes it:
+**Does it send my data anywhere?**
+No. The only network request it ever makes is checking for a new version.
 
-```bash
-./build.sh "Developer ID Application: Your Name (TEAMID)"
+## Building it yourself
 
-xcrun notarytool store-credentials "AC" --apple-id you@example.com --team-id TEAMID
-xcrun notarytool submit build/KeepAwake-1.0.dmg --keychain-profile "AC" --wait
-xcrun stapler staple build/KeepAwake-1.0.dmg
-```
-
-After that the DMG installs with no warning at all.
+The whole app is one Swift file. See **[DEVELOPING.md](DEVELOPING.md)** for
+building, signing, and publishing releases.
 
 ## License
 
-[MIT](LICENSE) © 2026 Kotabitus.
-
-A copy also ships inside the app bundle at
-`KeepAwake.app/Contents/Resources/LICENSE` and alongside the app in the DMG.
+[MIT](LICENSE) © 2026 Kotabitus — free to use, change, and share.
