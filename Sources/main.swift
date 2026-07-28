@@ -315,7 +315,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 // whenever Sparkle needs attention, and drop back afterwards.
 
 extension AppDelegate: SPUStandardUserDriverDelegate {
-    var supportsGentleScheduledUpdateReminders: Bool { true }
+    /// Deliberately false. Declaring gentle reminders makes Sparkle defer its UI
+    /// and expect the app to nudge the user itself — which an accessory app with
+    /// no Dock icon and no window has nowhere to do. With it off, a scheduled
+    /// check that finds an update shows Sparkle's standard alert immediately.
+    var supportsGentleScheduledUpdateReminders: Bool { false }
 
     func standardUserDriverWillHandleShowingUpdate(
         _ handleShowingUpdate: Bool,
