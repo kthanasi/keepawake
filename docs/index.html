@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeepAwake — keep your Mac's screen on</title>
+<meta name="description" content="A tiny macOS menu-bar app that stops your screen from sleeping. Free, open source, and costs no battery of its own.">
+<link rel="icon" href="icon.png">
+
+<meta property="og:title" content="KeepAwake — keep your Mac's screen on">
+<meta property="og:description" content="A tiny macOS menu-bar app that stops your screen from sleeping. Free and open source.">
+<meta property="og:image" content="https://kthanasi.github.io/keepawake/icon.png">
+<meta property="og:type" content="website">
+
+<style>
+/* ---------------------------------------------------------------- tokens */
+:root {
+  color-scheme: light dark;
+
+  --bg:        #f5f5f7;
+  --bg-raised: rgba(255,255,255,0.72);
+  --bg-solid:  #ffffff;
+  --text:      #1d1d1f;
+  --text-dim:  #6e6e73;
+  --line:      rgba(0,0,0,0.10);
+  --accent:    #4a56d8;
+  --accent-2:  #2f3ab8;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.10), 0 32px 64px rgba(0,0,0,.10);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #000000;
+    --bg-raised: rgba(28,28,30,0.72);
+    --bg-solid:  #1c1c1e;
+    --text:      #f5f5f7;
+    --text-dim:  #98989d;
+    --line:      rgba(255,255,255,0.12);
+    --accent:    #7b84ff;
+    --accent-2:  #9aa1ff;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.4);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.6), 0 32px 64px rgba(0,0,0,.5);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  /* System font first: it already ships optical sizing and legibility tuning. */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+  font-size: 100%;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); }
+
+.wrap { width: min(100% - 2.5rem, 61rem); margin-inline: auto; }
+
+/* ------------------------------------------------------------------ nav */
+/* Translucent layer with content scrolling underneath, not an opaque strip. */
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg-raised);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+}
+.nav .wrap { display: flex; align-items: center; gap: .625rem; height: 3rem; }
+.nav img { width: 1.375rem; height: 1.375rem; border-radius: .3125rem; }
+.nav b { font-size: .9375rem; font-weight: 600; letter-spacing: -.01em; }
+.nav .spacer { flex: 1; }
+.nav a {
+  font-size: .8125rem; color: var(--text-dim); text-decoration: none;
+  padding: .375rem .5rem; border-radius: .375rem;
+}
+.nav a:hover { color: var(--text); background: var(--line); }
+
+/* ----------------------------------------------------------------- hero */
+.hero { text-align: center; padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(2rem, 5vw, 3.5rem); }
+
+.hero .icon {
+  width: clamp(6.5rem, 16vw, 9rem); height: auto;
+  filter: drop-shadow(0 12px 32px rgba(74,86,216,.28));
+}
+
+h1 {
+  /* Large display type: tight leading, negative tracking. */
+  font-size: clamp(2.5rem, 7.5vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: -.035em;
+  font-weight: 700;
+  margin: 1.5rem 0 0;
+}
+
+.tagline {
+  font-size: clamp(1.125rem, 2.6vw, 1.5rem);
+  line-height: 1.35;
+  letter-spacing: -.015em;
+  color: var(--text-dim);
+  margin: .875rem auto 0;
+  max-width: 34ch;
+}
+
+/* --------------------------------------------------------------- button */
+.cta { margin-top: 2.25rem; display: flex; flex-direction: column; align-items: center; gap: .75rem; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  color: #fff; text-decoration: none;
+  font-size: 1.0625rem; font-weight: 600; letter-spacing: -.01em;
+  padding: .875rem 1.75rem;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  /* Feedback is instant and lives on the press. */
+  transition: transform 100ms ease-out, box-shadow 160ms ease-out, filter 160ms ease-out;
+}
+.btn:hover { filter: brightness(1.08); box-shadow: var(--shadow-lg); }
+.btn:active { transform: scale(.97); }
+.btn svg { width: 1.125rem; height: 1.125rem; }
+
+.meta { font-size: .8125rem; color: var(--text-dim); }
+.meta a { color: var(--text-dim); }
+
+/* --------------------------------------------------------------- mockup */
+.stage { padding: 1rem 0 clamp(3rem, 7vw, 5rem); display: flex; justify-content: center; }
+
+.menu {
+  width: min(100%, 20.5rem);
+  background: var(--bg-raised);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--line);
+  border-radius: .875rem;
+  box-shadow: var(--shadow-lg);
+  padding: .3125rem;
+  text-align: left;
+  font-size: .8125rem;
+}
+.menu .row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .3125rem .625rem; border-radius: .4375rem;
+}
+.menu .row.head { color: var(--text-dim); font-size: .75rem; padding-top: .4375rem; }
+.menu .row.sel { background: var(--accent); color: #fff; }
+.menu .row .tick { width: .75rem; opacity: .85; }
+.menu .rule { height: 1px; background: var(--line); margin: .3125rem .5rem; }
+.menu .caption {
+  text-align: center; color: var(--text-dim); font-size: .75rem;
+  margin-top: .75rem;
+}
+
+/* -------------------------------------------------------------- feature */
+.grid {
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  padding-bottom: clamp(3rem, 7vw, 5rem);
+}
+.card {
+  background: var(--bg-solid);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.card .emoji { font-size: 1.5rem; line-height: 1; }
+.card h3 {
+  font-size: 1.0625rem; font-weight: 600; letter-spacing: -.015em;
+  margin: .75rem 0 .375rem;
+}
+.card p { margin: 0; font-size: .9375rem; color: var(--text-dim); }
+
+/* --------------------------------------------------------------- blocks */
+section { padding-bottom: clamp(3rem, 7vw, 5rem); }
+
+h2 {
+  font-size: clamp(1.625rem, 3.6vw, 2.25rem);
+  line-height: 1.15; letter-spacing: -.025em; font-weight: 700;
+  margin: 0 0 1.5rem;
+}
+
+ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; }
+ol.steps li {
+  counter-increment: s;
+  display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; align-items: start;
+  background: var(--bg-solid);
+  border: 1px solid var(--line);
+  border-radius: 1rem; padding: 1.25rem;
+}
+ol.steps li::before {
+  content: counter(s);
+  width: 2rem; height: 2rem; border-radius: 999px;
+  background: var(--accent); color: #fff;
+  display: grid; place-items: center;
+  font-size: .875rem; font-weight: 600;
+}
+ol.steps h3 { margin: .25rem 0 .25rem; font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+ol.steps p { margin: 0; font-size: .9375rem; color: var(--text-dim); }
+
+.note {
+  margin-top: 1rem;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-solid);
+  border-radius: .5rem;
+  padding: 1rem 1.25rem;
+  font-size: .9375rem; color: var(--text-dim);
+}
+.note b { color: var(--text); }
+
+details {
+  border-bottom: 1px solid var(--line);
+  padding: 1rem .25rem;
+}
+details summary {
+  cursor: pointer; list-style: none;
+  font-size: 1rem; font-weight: 600; letter-spacing: -.01em;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::after {
+  content: "+"; color: var(--text-dim); font-weight: 400; font-size: 1.25rem;
+}
+details[open] summary::after { content: "\2013"; }
+details p { margin: .625rem 0 0; font-size: .9375rem; color: var(--text-dim); max-width: 62ch; }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 2rem 0 3rem;
+  font-size: .8125rem; color: var(--text-dim);
+  display: flex; flex-wrap: wrap; gap: .375rem 1.25rem; align-items: center;
+}
+footer .spacer { flex: 1; }
+footer a { color: var(--text-dim); }
+
+/* ------------------------------------------------------- accessibility */
+@media (prefers-reduced-transparency: reduce) {
+  .nav, .menu { background: var(--bg-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .btn:active { transform: none; }
+}
+@media (prefers-contrast: more) {
+  :root { --line: rgba(0,0,0,.5); }
+  @media (prefers-color-scheme: dark) { :root { --line: rgba(255,255,255,.5); } }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <img src="icon.png" alt="">
+    <b>KeepAwake</b>
+    <span class="spacer"></span>
+    <a href="#install">Install</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/kthanasi/keepawake">GitHub</a>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <img class="icon" src="icon.png" alt="KeepAwake app icon: a white coffee cup on a blue rounded square">
+  <h1>Keep your screen&nbsp;on.</h1>
+  <p class="tagline">A coffee cup in your menu bar that stops your Mac from dozing off mid‑thought.</p>
+
+  <div class="cta">
+    <a class="btn" href="https://github.com/kthanasi/keepawake/releases/latest">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 1a.75.75 0 0 1 .75.75v7.19l2.72-2.72a.75.75 0 1 1 1.06 1.06l-4 4a.75.75 0 0 1-1.06 0l-4-4a.75.75 0 0 1 1.06-1.06l2.72 2.72V1.75A.75.75 0 0 1 8 1Z"/>
+        <path d="M2 12.5a.75.75 0 0 1 .75.75v.5c0 .14.11.25.25.25h10c.14 0 .25-.11.25-.25v-.5a.75.75 0 0 1 1.5 0v.5A1.75 1.75 0 0 1 13 15.5H3a1.75 1.75 0 0 1-1.75-1.75v-.5A.75.75 0 0 1 2 12.5Z"/>
+      </svg>
+      Download for macOS
+    </a>
+    <p class="meta">
+      Free &amp; open source · macOS 13 or later · Apple silicon &amp; Intel ·
+      <a href="https://github.com/kthanasi/keepawake/blob/main/LICENSE">MIT</a>
+    </p>
+  </div>
+</header>
+
+<div class="stage wrap">
+  <div>
+    <div class="menu" role="img" aria-label="Illustration of the KeepAwake menu showing Awake with 43 minutes left, session length options, and preferences.">
+      <div class="row head">Awake — 43m left</div>
+      <div class="rule"></div>
+      <div class="row"><span class="tick"></span>Turn Off</div>
+      <div class="rule"></div>
+      <div class="row"><span class="tick"></span>Indefinitely</div>
+      <div class="row"><span class="tick"></span>Reset to 15 minutes</div>
+      <div class="row"><span class="tick"></span>Reset to 30 minutes</div>
+      <div class="row sel"><span class="tick">✓</span>Reset to 1 hour</div>
+      <div class="row"><span class="tick"></span>Reset to 2 hours</div>
+      <div class="rule"></div>
+      <div class="row"><span class="tick">✓</span>Keep Display On</div>
+      <div class="row"><span class="tick"></span>Start on Login</div>
+      <div class="rule"></div>
+      <div class="row"><span class="tick"></span>Check for Updates…</div>
+      <div class="row"><span class="tick"></span>Quit KeepAwake</div>
+    </div>
+    <p class="caption">The whole app. That's it.</p>
+  </div>
+</div>
+
+<main>
+  <section class="wrap">
+    <div class="grid">
+      <div class="card">
+        <div class="emoji">🔋</div>
+        <h3>Costs no battery</h3>
+        <p>It asks macOS to hold the screen awake — the same way the system's own <code>caffeinate</code> does. The Mac does the work, so the app sits at 0% CPU.</p>
+      </div>
+      <div class="card">
+        <div class="emoji">⏱</div>
+        <h3>Timed sessions</h3>
+        <p>Stay awake for 15 minutes or 5 hours, then switch off automatically. No more discovering it ran all weekend.</p>
+      </div>
+      <div class="card">
+        <div class="emoji">🌙</div>
+        <h3>Screen off, Mac on</h3>
+        <p>Flip one switch to let the display sleep while the machine keeps working — ideal for long downloads and exports.</p>
+      </div>
+      <div class="card">
+        <div class="emoji">🪶</div>
+        <h3>Nothing extra</h3>
+        <p>Under 4 MB. No account, no tracking, no Dock icon. The only request it ever makes is checking for a new version.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="install">
+    <h2>Installing takes a minute</h2>
+    <ol class="steps">
+      <li>
+        <div>
+          <h3>Download the disk image</h3>
+          <p>Grab the <code>.dmg</code> from the <a href="https://github.com/kthanasi/keepawake/releases/latest">latest release</a>.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Drag it into Applications</h3>
+          <p>Open the downloaded file and drop KeepAwake into the Applications folder beside it.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Right‑click it, then choose Open</h3>
+          <p>Just for the very first launch. After that it opens like any other app — look for the ☕️ cup at the top‑right of your screen.</p>
+        </div>
+      </li>
+    </ol>
+    <p class="note">
+      <b>Why the right‑click?</b> macOS warns about apps that haven't gone through
+      Apple's paid notarization programme, which this one hasn't. Right‑click → Open
+      is macOS's normal way of saying "I trust this one," and you only do it once.
+      Every update afterwards is cryptographically signed and verified before it installs.
+    </p>
+  </section>
+
+  <section class="wrap" id="faq">
+    <h2>Questions</h2>
+
+    <details>
+      <summary>Does it stop my screen from locking?</summary>
+      <p>It keeps the display from sleeping, and the lock that normally follows sleep won't happen either. It doesn't touch your password or Screen Time settings — lock the screen yourself any time with Control‑Command‑Q.</p>
+    </details>
+
+    <details>
+      <summary>Will it keep my Mac awake with the lid closed?</summary>
+      <p>No. Closing the lid always puts the Mac to sleep, and no app can override that.</p>
+    </details>
+
+    <details>
+      <summary>Does it drain the battery?</summary>
+      <p>The app itself uses no measurable power — it holds a flag the kernel owns, with nothing running in the background. Your screen staying lit does use power, which is rather the point, so a timed session is the battery‑friendly way to use it.</p>
+    </details>
+
+    <details>
+      <summary>Does it send my data anywhere?</summary>
+      <p>No. There's no account, no analytics, and no tracking. The only network request it ever makes is asking GitHub whether a newer version exists.</p>
+    </details>
+
+    <details>
+      <summary>How do I uninstall it?</summary>
+      <p>Quit it from its menu and drag KeepAwake from Applications to the Trash. To clear its settings too, run <code>defaults delete com.kthanasi.KeepAwake</code> in Terminal.</p>
+    </details>
+
+    <details>
+      <summary>Can I read the source?</summary>
+      <p>All of it — the entire app is a single Swift file. It's on <a href="https://github.com/kthanasi/keepawake">GitHub</a> under the MIT licence, so you're free to build it yourself, change it, or ship your own version.</p>
+    </details>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>MIT licensed · © 2026 Kotabitus</span>
+  <span class="spacer"></span>
+  <a href="https://github.com/kthanasi/keepawake">Source</a>
+  <a href="https://github.com/kthanasi/keepawake/releases">Releases</a>
+  <a href="https://github.com/kthanasi/keepawake/blob/main/DEVELOPING.md">Build it yourself</a>
+</footer>
+
+</body>
+</html>
