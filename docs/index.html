@@ -160,8 +160,12 @@ h1 {
 /* -------------------------------------------------------------- feature */
 .grid {
   display: grid; gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: 1fr;
   padding-bottom: clamp(3rem, 7vw, 5rem);
+}
+/* Two columns, never three — four cards in a 3+1 row leave an orphan. */
+@media (min-width: 44rem) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
 }
 .card {
   background: var(--bg-solid);
