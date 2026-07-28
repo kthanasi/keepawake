@@ -3,6 +3,15 @@
     <channel>
         <title>KeepAwake</title>
         <item>
+            <title>1.2</title>
+            <pubDate>Tue, 28 Jul 2026 21:48:20 +0200</pubDate>
+            <link>https://github.com/kthanasi/keepawake</link>
+            <sparkle:version>1.2</sparkle:version>
+            <sparkle:shortVersionString>1.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/kthanasi/keepawake/releases/download/v1.2/KeepAwake-1.2.zip" length="1456324" type="application/octet-stream" sparkle:edSignature="3RuniJb6EFQSXokmOolf8ioOwWLzVYvzvLZy7Pl8BkKlVmIClq5O1NwbOZGFzbN5ZAgPluTR6a8QAdWBuMR8CQ=="/>
+        </item>
+        <item>
             <title>1.1</title>
             <pubDate>Tue, 28 Jul 2026 21:37:17 +0200</pubDate>
             <link>https://github.com/kthanasi/keepawake</link>
